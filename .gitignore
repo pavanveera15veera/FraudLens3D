@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Python virtual environment
+.venv/
+
+# Production build
+build/
+
+# NYC Open Data CSV files (large — regenerate with docs/setup.sh)
+*.csv
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+Thumbs.db
