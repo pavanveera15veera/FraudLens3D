@@ -1,171 +1,50 @@
 # FraudLens3D
+A geospatial risk visualization tool I built for my Data Visualization course at NYU Tandon. The idea came from wanting to see if NYC's public violation data could be used to identify high-risk commercial zones — something useful for insurance underwriting or city planning.
 
-A real-time 3D fraud and commercial risk intelligence dashboard for New York City, built on Mapbox GL JS. Visualizes 29,000+ violation and inspection records across 10 NYC Open Data datasets on an interactive dark-mode map with cyberpunk aesthetics.
+The map pulls from 12 NYC Open Data datasets, scores each location based on how many different types of violations cluster there, and renders everything as an interactive 3D map.
 
-![FraudLens3D Dashboard](docs/screenshot.png)
+## What it does
 
----
+You get a dark Mapbox map of NYC with colored dots — each dot is a violation record, colored by type (housing, restaurant inspection, fire, construction, etc). The height of each dot represents the fraud/risk score for that location. Denser, more diverse clusters score higher.
 
-## What It Does
+Search any address or restaurant name and you get a full breakdown — every violation on record, any outstanding ECB fines, rodent inspection results, and a rough insurance recommendation. If you search a chain like 'Subway' it shows all their NYC locations ranked by risk.
 
-FraudLens3D is an underwriting and risk analysis tool that:
+There's also a portfolio mode where you draw a circle on the map and see aggregate risk stats for that area.
 
-- **Scores every NYC address** using a multi-factor algorithm: location density, dataset diversity, and violation severity
-- **Visualizes risk as glowing dots** on a 3D Mapbox map — color by dataset type, height by score
-- **Lets you search any address or business** and instantly see a full risk report with ECB fines, OATH hearings, rodent inspection results, and insurance recommendations
-- **Detects business chains** — search "McDonald's" and see all NYC locations ranked by risk score
-- **Click any dot** for a detailed side panel: violation details, nearby density (500m radius vs NYC average), factor breakdown, and underwriting recommendation
-- **Portfolio Builder** — draw a circle on the map, get aggregate stats for that area, export a risk report
+## Scoring
 
----
+Each record gets placed into a ~300m grid cell. The score is:
 
-## Tech Stack
+score = (density × 0.5) + (dataset_diversity × 0.3) + (violation_severity × 0.2)
 
-| Layer | Technology |
-|---|---|
-| Frontend | React 18, Create React App |
-| Map | Mapbox GL JS v3 |
-| CSV parsing | PapaParse |
-| Data pipeline | Python 3, pandas, requests |
-| Styling | Inline CSS with CSS variables, glassmorphism |
-| Storage | localStorage for recent searches and portfolio |
+Density uses log normalization so one unusually dense area doesn't flatten everything else. ECB violations and failed rodent inspections add a bonus since they're stronger risk signals.
 
----
+The distribution ends up between 0.19 and 0.88 with most records in the 0.3–0.7 range, which felt realistic.
 
-## Features
+## Stack
 
-- **3D Mapbox map** with dark-v11 style, 3D buildings, pitch/bearing controls
-- **Full spatial navigation**: right-click drag to rotate, Ctrl+drag to tilt, arrow keys, auto-spin, pitch toggle
-- **10 NYC datasets** fused into a unified risk score per address
-- **Smart search bar** with live suggestions (addresses, businesses, chains), keyboard navigation, Mapbox geocoding fallback, recent search history
-- **Click panel** on every dot: 6 sections — identity, risk score with factor bars, type-specific violation details, 500m nearby analysis, insurance recommendation, actions
-- **Chain Detector** panel: search any restaurant or business chain, see all NYC locations ranked by risk
-- **Portfolio Builder**: draw a circle on map, compute area stats, export text report
-- **Address Lookup** with full risk report: ECB violations, OATH hearings, rodent inspections, comparable properties
-- **Filter panel**: toggle dataset types, risk threshold slider, top risk zones chart
-- **Stats panel**: live counters, borough donut chart, score distribution
-- **Borough filtering** via navbar dropdown
-- **Collapsible sections** in all detail panels
+- React + Mapbox GL JS for the map and UI
+- PapaParse for loading the CSVs in the browser
+- Python + pandas for the initial data download pipeline
+- NYC Open Data Socrata API for all 12 datasets
 
----
+## Running it
+
+You need Node 18+ and Python 3.9+.
+
+```
+git clone https://github.com/pavanveera15veera/FraudLens3D.git
+cd FraudLens3D
+bash docs/setup.sh
+cd src && npm install && npm start
+```
+
+setup.sh downloads all the datasets automatically. Takes about 2 minutes.
 
 ## Datasets
 
-All data is fetched from [NYC Open Data](https://data.cityofnewyork.us/) via the Socrata API.
+Housing violations, restaurant inspections, construction violations, 311 requests, permit issuance, property valuation, fire incidents, ECB violations, OATH hearings, rodent inspections, active businesses, DCA complaints — all from data.cityofnewyork.us
 
-| Dataset | Source ID | Records |
-|---|---|---|
-| Housing Violations | `wvxf-dwi5` | 5,000 |
-| Restaurant Inspections | `43nn-pn8j` | 5,000 |
-| Construction Violations | `3h2n-5cm9` | 5,000 |
-| 311 Service Requests | `erm2-nwe9` | 5,000 |
-| Permit Issuance | `ipu4-2q9a` | 5,000 |
-| Property Valuation | `yjxr-fw8i` | 5,000 |
-| Fire Incidents | `8m42-w767` | 5,000 |
-| ECB Violations | `y9uf-suid` | 3,000 |
-| OATH Hearings | `jz4z-kudi` | 3,000 |
-| Rodent Inspections | `p937-wjvj` | 3,000 |
-| Active Businesses | `w7w3-xahh` | 5,000 |
-| DCA Complaints | `3rfa-3xsf` | 3,000 |
+## Notes
 
----
-
-## Risk Scoring Algorithm
-
-Each record is placed into a 0.003° grid cell (~300m). The base score is:
-
-```
-score = F1 × 0.5 + F2 × 0.3 + F3 × 0.2
-```
-
-- **F1 (Density)** — `log1p(cell_count) / log1p(50)` — how many violations in the same grid cell
-- **F2 (Diversity)** — `unique_dataset_types / 7` — how many different datasets flag this location
-- **F3 (Severity)** — per-type weight: Housing=0.9, Fire=0.85, Construction=0.8, 311=0.6, Restaurant=0.5, Permit=0.4, Property=0.3
-
-Enforcement bonuses (capped at 1.0):
-- ECB violation at address: **+0.30**
-- OATH hearing at address: **+0.20**
-- Rodent inspection failure at address: **+0.25**
-
----
-
-## Installation
-
-### Prerequisites
-
-- Node.js 18+
-- Python 3.9+ (for data download only)
-
-### 1. Clone the repo
-
-```bash
-git clone https://github.com/pavanveera15veera/FraudLens3D.git
-cd FraudLens3D
-```
-
-### 2. Download the data
-
-```bash
-bash docs/setup.sh
-```
-
-This downloads all 12 datasets into `data/` (takes ~2 minutes, requires internet).
-
-### 3. Install frontend dependencies
-
-```bash
-cd src
-npm install
-```
-
-### 4. Run the app
-
-```bash
-npm start
-```
-
-Open [http://localhost:3000](http://localhost:3000).
-
----
-
-## Project Structure
-
-```
-FraudLens3D/
-├── data/                    # CSV datasets (generated by setup.sh, gitignored)
-├── docs/
-│   ├── download_data.py     # Python data pipeline
-│   └── setup.sh             # One-command data setup script
-└── src/                     # React application (Create React App)
-    ├── public/
-    │   ├── data/            # Symlink or copy of ../data/ for dev server
-    │   └── index.html
-    └── src/
-        ├── App.jsx
-        ├── index.css
-        ├── components/
-        │   ├── Scene3D.jsx        # Mapbox GL JS map
-        │   ├── SearchBar.jsx      # Search with risk panel
-        │   ├── ClickPanel.jsx     # Dot click detail panel
-        │   ├── FilterPanel.jsx    # Left sidebar filters
-        │   ├── StatsPanel.jsx     # Right sidebar stats
-        │   ├── Navbar.jsx         # Top bar
-        │   ├── StatsBar.jsx       # Bottom stats bar
-        │   ├── ChainDetector.jsx  # Chain search panel
-        │   └── PortfolioBuilder.jsx
-        └── utils/
-            ├── fetchData.js       # PapaParse CSV loader
-            └── processData.js     # Risk scoring engine
-```
-
----
-
-## Mapbox Token
-
-The Mapbox token in `src/components/Scene3D.jsx` is scoped for development use. For production, replace it with your own token from [mapbox.com](https://www.mapbox.com/).
-
----
-
-## License
-
-MIT
+The Mapbox token in Scene3D.jsx is a dev token — replace it with your own from mapbox.com if you're running this long term. The data folder is gitignored since the CSVs are too large, setup.sh regenerates it.
