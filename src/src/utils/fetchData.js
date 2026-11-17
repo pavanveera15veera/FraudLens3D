@@ -1,20 +1,24 @@
 import Papa from 'papaparse';
 
+// Served from the app's own base path, so the build works at a subpath
+// (e.g. /FraudLens3D/) as well as at the domain root.
+const BASE = process.env.PUBLIC_URL || '';
+
 const DATA_FILES = {
   // ── Original 7 ──────────────────────────────────────────────────────────
-  housingViolations:      '/data/housing_violations.csv',
-  restaurantInspections:  '/data/restaurant_inspections.csv',
-  constructionViolations: '/data/construction_violations.csv',
-  serviceRequests311:     '/data/service_requests_311.csv',
-  permitIssuance:         '/data/permit_issuance.csv',
-  propertyValuation:      '/data/property_valuation.csv',
-  fireIncidents:          '/data/fire_incidents.csv',
+  housingViolations:      BASE + '/data/housing_violations.csv',
+  restaurantInspections:  BASE + '/data/restaurant_inspections.csv',
+  constructionViolations: BASE + '/data/construction_violations.csv',
+  serviceRequests311:     BASE + '/data/service_requests_311.csv',
+  permitIssuance:         BASE + '/data/permit_issuance.csv',
+  propertyValuation:      BASE + '/data/property_valuation.csv',
+  fireIncidents:          BASE + '/data/fire_incidents.csv',
   // ── 5 new commercial / enforcement datasets ──────────────────────────────
-  ecbViolations:          '/data/ecb_violations.csv',
-  oathHearings:           '/data/oath_hearings.csv',
-  rodentInspections:      '/data/rodent_inspections.csv',
-  activeBusinesses:       '/data/active_businesses.csv',
-  dcaComplaints:          '/data/dca_complaints.csv',
+  ecbViolations:          BASE + '/data/ecb_violations.csv',
+  oathHearings:           BASE + '/data/oath_hearings.csv',
+  rodentInspections:      BASE + '/data/rodent_inspections.csv',
+  activeBusinesses:       BASE + '/data/active_businesses.csv',
+  dcaComplaints:          BASE + '/data/dca_complaints.csv',
 };
 
 function parseCSV(url) {
