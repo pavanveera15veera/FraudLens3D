@@ -4,7 +4,7 @@ import pandas as pd
 from io import StringIO
 
 BASE_URL = "https://data.cityofnewyork.us/resource"
-DATA_DIR = os.path.expanduser("~/Desktop/FraudLens3D/data")
+DATA_DIR = os.environ.get("FRAUDLENS_DATA_DIR", os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data"))
 LIMIT = 5000
 
 # ── Original 7 datasets ───────────────────────────────────────────────────────
@@ -21,11 +21,15 @@ DATASETS = [
 
 # ── 5 new commercial / enforcement datasets ───────────────────────────────────
 NEW_DATASETS = [
-    # Active business licenses — tobacco dealers + restaurants
+    # Active business licenses — tobacco and e-cigarette dealers.
+    # The column was renamed from `industry` to `business_category` upstream,
+    # and 'Restaurant' is no longer one of its values; restaurants come in
+    # through the DOHMH inspection dataset above instead.
     {
         "url": "https://data.cityofnewyork.us/resource/w7w3-xahh.json"
                "?$limit=5000"
-               "&$where=industry=%27Tobacco%20Retail%20Dealer%27%20OR%20industry=%27Restaurant%27",
+               "&$where=business_category%20in%20("
+               "%27Tobacco%20Retail%20Dealer%27,%27Electronic%20Cigarette%20Dealer%27)",
         "filename": "active_businesses.csv",
     },
     # ECB (Environmental Control Board) violations
